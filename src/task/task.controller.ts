@@ -1,26 +1,23 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { TaskService } from './task.service';
+import { type Tasks, type Task } from './shemas';
+import { CreateTaskDto } from './create-task.dto';
 
 @Controller('task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Get('all')
-  getAll(): GetAll {
+  getAll(): Tasks {
     return this.taskService.getAll();
   }
 
   @Get('id/:id')
-  getById(@Param('id') id: string): GetOne | undefined {
-    const task = this.taskService.getById(Number(id));
-    if (!task) throw new NotFoundException('Task not f ound');
-    return task;
+  getById(@Param('id') id: string): Task {
+    return this.taskService.getById(Number(id));
+  }
+  @Post()
+  create(@Body() dto: CreateTaskDto): Task {
+    return this.taskService.create(dto);
   }
 }
-type GetOne = {
-  id: number;
-  title: string;
-  isCompleted: boolean;
-};
-
-type GetAll = GetOne[];
