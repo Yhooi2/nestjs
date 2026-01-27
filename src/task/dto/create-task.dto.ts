@@ -15,6 +15,7 @@ import {
   // MinLength,
 } from 'class-validator';
 import { TaskTags } from '../shemas';
+import { StartsWith } from '../decorators/starts-with.decorator';
 
 export class CreateTaskDto {
   @IsString({ message: 'Title must be a string' })
@@ -22,6 +23,7 @@ export class CreateTaskDto {
   // @MinLength(2)
   // @MaxLength(40)
   @Length(2, 40)
+  @StartsWith('Task:', { message: 'Title must start with "Task:"' })
   title: string;
 
   @IsString({ message: 'Description must be a string' })
