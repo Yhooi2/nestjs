@@ -5,6 +5,7 @@ import { MoviesModule } from './movie/movie.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getTypeOrmConfig } from 'config/getTypeOrmConfig';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { getTypeOrmConfig } from 'config/getTypeOrmConfig';
       inject: [ConfigService], // https://docs.nestjs.com/fundamentals/custom-providers Инъекция зависимостей в фабрику
     }),
     MoviesModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

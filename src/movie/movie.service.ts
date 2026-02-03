@@ -1,17 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { movieEntity } from './entities/movie.entity';
+import { MovieEntity } from './entities/movie.entity';
 import { Repository } from 'typeorm';
 import { CreateMovieDto } from './dto/create-movie.dto';
+import { UpdateMovieDto } from './dto/update-movie.dto';
 
 @Injectable()
 export class MoviesService {
   constructor(
-    @InjectRepository(movieEntity)
-    private readonly movieRepository: Repository<movieEntity>,
+    @InjectRepository(MovieEntity)
+    private readonly movieRepository: Repository<MovieEntity>,
   ) {}
 
-  async getAll(): Promise<movieEntity[]> {
+  async getAll(): Promise<MovieEntity[]> {
     return await this.movieRepository.find({
       where: { isAvailable: true },
       order: { createdAt: 'desc' },
@@ -19,7 +20,7 @@ export class MoviesService {
     });
   }
 
-  async findById(id: string): Promise<movieEntity> {
+  async findById(id: string): Promise<MovieEntity> {
     const movie = await this.movieRepository.findOne({
       where: { id },
     });
@@ -27,18 +28,18 @@ export class MoviesService {
     return movie;
   }
 
-  async create(dto: CreateMovieDto): Promise<movieEntity> {
+  async create(dto: CreateMovieDto): Promise<MovieEntity> {
     const movie = this.movieRepository.create(dto);
     return await this.movieRepository.save(movie);
   }
 
-  async update(id: string, dto: CreateMovieDto): Promise<movieEntity> {
-    const movie = await this.findById(id);
-    Object.assign(movie, dto);
+  async update(id: string, dto: UpdateMovieDto): Promise<MovieEntity> {
+    const movie = await this.movieRepository.preload({ id, ...dto });
+    if (!movie) throw new NotFoundException('Фильм не найден');
     return await this.movieRepository.save(movie);
   }
 
-  async delete(id: string): Promise<movieEntity> {
+  async delete(id: string): Promise<MovieEntity> {
     const movie = await this.findById(id);
     await this.movieRepository.delete(id);
     return movie;
