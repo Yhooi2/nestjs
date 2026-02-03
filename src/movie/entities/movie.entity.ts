@@ -1,8 +1,11 @@
+import { ActorEntity } from 'src/actor/entities/actor.entity';
 import { ReviewEntity } from 'src/review/entities/review.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -70,6 +73,14 @@ export class MovieEntity {
 
   @OneToMany(() => ReviewEntity, (review) => review.movie)
   reviews: ReviewEntity;
+
+  @ManyToMany(() => ActorEntity, (actor) => actor.movies)
+  @JoinTable({
+    name: 'movie_actors',
+    joinColumn: { name: 'movie_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'actor_id', referencedColumnName: 'id' },
+  })
+  actors: ActorEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
