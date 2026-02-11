@@ -4,12 +4,14 @@ import { MovieEntity } from './entities/movie.entity';
 import { Repository } from 'typeorm';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
+import { ActorService } from 'src/actor/actor.service';
 
 @Injectable()
 export class MoviesService {
   constructor(
     @InjectRepository(MovieEntity)
     private readonly movieRepository: Repository<MovieEntity>,
+    private readonly actorService: ActorService,
   ) {}
 
   async getAll(): Promise<MovieEntity[]> {
@@ -23,13 +25,17 @@ export class MoviesService {
   async findById(id: string): Promise<MovieEntity> {
     const movie = await this.movieRepository.findOne({
       where: { id },
+      relations: { actors: true },
     });
     if (!movie) throw new NotFoundException('Фильм не найден');
     return movie;
   }
 
   async create(dto: CreateMovieDto): Promise<MovieEntity> {
-    const movie = this.movieRepository.create(dto);
+    const { title, releaseYear, actorsIds } = dto;
+    const actors = await this.actorService.findByIds(actorsIds);
+    if (!actors) throw new NotFoundException('Актеры не найдены');
+    const movie = this.movieRepository.create({ title, releaseYear, actors });
     return await this.movieRepository.save(movie);
   }
 
