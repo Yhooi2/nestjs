@@ -14,7 +14,11 @@ async function bootstrap() {
     .addTag('cats')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup('api', app, documentFactory, {
+    jsonDocumentUrl: '/api.json',
+    yamlDocumentUrl: '/api.yaml',
+    customSiteTitle: 'My API Docs',
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
