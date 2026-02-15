@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -13,7 +12,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
-import { Cookie } from 'src/shared/decorators/cookies.decorator';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import {
   ApiBadRequestResponse,
@@ -24,7 +22,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthResponse } from './dto/respons.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { Cookie } from './decorators/cookies.decorator';
+import { Authorization } from './decorators/authorization.decorator';
+import { Authorized } from './decorators/authorized.decorator';
+import type { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -108,10 +109,13 @@ export class AuthController {
     return this.authService.logout(res);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @Authorization()
   @Get('profile')
   @HttpCode(HttpStatus.OK)
-  getProfile(@Req() req: Request) {
-    return req.user;
+  getProfile(@Authorized() user: User) {
+    // getProfile(@Authorized('id') id: string) {
+    // return id
+
+    return user;
   }
 }
