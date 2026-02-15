@@ -1,4 +1,4 @@
-export interface jwtPayload {
+export interface JwtPayload {
   sub: string;
   type: 'access' | 'refresh';
   iat?: number;

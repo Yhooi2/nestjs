@@ -9,7 +9,7 @@ import { RegisterDto } from './dto/register.dto';
 import { argon2id, hash, verify } from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { jwtPayload } from './interfaces/jwt.inteface';
+import { JwtPayload } from './interfaces/jwt.inteface';
 import ms, { StringValue } from 'ms';
 import { User } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
@@ -39,32 +39,6 @@ export class AuthService {
     this.jwtAccessToken = ms(accessRow) / 1000;
     this.jwtRefreshToken = ms(refreshRow) / 1000;
   }
-  private async checkUserByEmail(
-    email: string,
-    validator?: (user: User | null) => void,
-  ): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    if (validator) validator(user);
-    return user;
-  }
-
-  async login(res: Response, dto: LoginDto) {
-    const { email, password } = dto;
-    const user = (await this.checkUserByEmail(email, (user) => {
-      if (!user) throw new NotFoundException('Invalid email or password');
-    })) as User;
-    const isPasswordValid = await verify(user.password, password);
-    if (!isPasswordValid)
-      throw new NotFoundException('Invalid email or password');
-    return this.auth(user.id, res);
-  }
-
-  logout(res: Response) {
-    this.clearRefreshCookie(res);
-    return { message: 'Logged out successfully' };
-  }
 
   async register(res: Response, dto: RegisterDto) {
     const { email, password, name } = dto;
@@ -81,21 +55,28 @@ export class AuthService {
     });
     return this.auth(user.id, res);
   }
+
+  async login(res: Response, dto: LoginDto) {
+    const { email, password } = dto;
+    const user = (await this.checkUserByEmail(email, (user) => {
+      if (!user) throw new NotFoundException('Invalid email or password');
+    })) as User;
+    const isPasswordValid = await verify(user.password, password);
+    if (!isPasswordValid)
+      throw new NotFoundException('Invalid email or password');
+    return this.auth(user.id, res);
+  }
+
   async refresh(refreshToken: string, res: Response) {
     try {
       const payload =
-        await this.jwtService.verifyAsync<jwtPayload>(refreshToken);
+        await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
 
       if (payload.type !== 'refresh') {
         throw new Error('Invalid token type');
       }
 
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-        select: { id: true },
-      });
-
-      if (!user) throw new Error('User not found');
+      const user = await this.getUserById(payload.sub);
       return this.auth(user.id, res);
     } catch (e) {
       console.error('Error refreshing token:', e);
@@ -103,6 +84,29 @@ export class AuthService {
     }
   }
 
+  logout(res: Response) {
+    this.clearRefreshCookie(res);
+    return { message: 'Logged out successfully' };
+  }
+
+  async getUserById(id: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) throw new Error('User not found');
+    return user;
+  }
+  private async checkUserByEmail(
+    email: string,
+    validator?: (user: User | null) => void,
+  ): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (validator) validator(user);
+    return user;
+  }
   private auth(userId: string, res: Response) {
     const { accessToken, refreshToken } = this.generateToken(userId);
     const refreshTokenExpires = new Date(
