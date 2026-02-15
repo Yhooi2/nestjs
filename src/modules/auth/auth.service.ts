@@ -61,6 +61,11 @@ export class AuthService {
     return this.auth(user.id, res);
   }
 
+  logout(res: Response) {
+    this.clearRefreshCookie(res);
+    return { message: 'Logged out successfully' };
+  }
+
   async register(res: Response, dto: RegisterDto) {
     const { email, password, name } = dto;
     await this.checkUserByEmail(email, (user) => {
@@ -132,7 +137,15 @@ export class AuthService {
       secure: !isDevEnv,
       sameSite: isDevEnv ? 'none' : 'lax',
       expires,
-      domain: this.cookieDomain,
+    });
+  }
+
+  private clearRefreshCookie(res: Response) {
+    const isDevEnv = isDev(this.configService);
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: !isDevEnv,
+      sameSite: isDevEnv ? 'none' : 'lax',
     });
   }
 }

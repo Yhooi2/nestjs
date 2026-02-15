@@ -35,6 +35,11 @@ export class AuthController {
   ) {
     return await this.authService.login(res, dto);
   }
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    return this.authService.logout(res);
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
